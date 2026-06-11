@@ -1,0 +1,216 @@
+
+<h2 class="sr-only">Amazon Appstore April 2026 sales analysis dashboard showing revenue, niches, pricing, and top apps</h2>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; }
+.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.metric-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.section { margin-bottom: 1.5rem; }
+.section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+.chart-box { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px; }
+.chart-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; }
+.app-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+.app-table th { text-align: left; color: var(--color-text-secondary); font-weight: 400; font-size: 12px; padding: 0 8px 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.app-table td { padding: 8px 8px 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
+.app-table tr:last-child td { border-bottom: none; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; }
+.badge-green { background: #EAF3DE; color: #3B6D11; }
+.badge-amber { background: #FAEEDA; color: #854F0B; }
+.badge-blue { background: #E6F1FB; color: #185FA5; }
+.badge-gray { background: #F1EFE8; color: #5F5E5A; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+.bar-label { width: 130px; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.bar-track { flex: 1; height: 10px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; }
+.bar-val { width: 50px; text-align: right; color: var(--color-text-secondary); font-size: 12px; flex-shrink: 0; }
+.insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.insight-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; }
+.insight-icon { font-size: 16px; margin-bottom: 6px; }
+.insight-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.insight-body { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; font-size: 12px; color: var(--color-text-secondary); }
+.legend span { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+</style>
+
+<div style="padding: 1rem 0;">
+
+<div class="metric-grid">
+  <div class="metric">
+    <div class="metric-label">Total gross revenue</div>
+    <div class="metric-value">$228</div>
+    <div class="metric-sub">April 2026</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Estimated earnings</div>
+    <div class="metric-value">$182</div>
+    <div class="metric-sub">79.9% margin</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Total transactions</div>
+    <div class="metric-value">190</div>
+    <div class="metric-sub">5 refunds</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Free downloads</div>
+    <div class="metric-value">88</div>
+    <div class="metric-sub">46% of all installs</div>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="chart-box">
+    <div class="chart-title">Revenue by niche (USD)</div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#378ADD;"></span>Vehicles/Racing</span>
+      <span><span class="legend-dot" style="background:#1D9E75;"></span>Sports</span>
+      <span><span class="legend-dot" style="background:#888780;"></span>Other</span>
+    </div>
+    <div style="position:relative; height:180px;"><canvas id="nicheChart" role="img" aria-label="Bar chart of revenue by niche: Vehicles/Racing leads at $97.79">Revenue by niche bar chart</canvas></div>
+  </div>
+  <div class="chart-box">
+    <div class="chart-title">Price point performance (USD)</div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#185FA5;"></span>Units sold</span>
+      <span><span class="legend-dot" style="background:#0F6E56;"></span>Revenue generated</span>
+    </div>
+    <div style="position:relative; height:180px;"><canvas id="priceChart" role="img" aria-label="Grouped bar chart showing units sold and revenue at each price point">Price point chart</canvas></div>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="chart-box" style="grid-column: 1 / -1;">
+    <div class="chart-title">Daily revenue trend — April 2026</div>
+    <div style="position:relative; height:160px;"><canvas id="trendChart" role="img" aria-label="Line chart of daily revenue across April 2026">Daily revenue trend</canvas></div>
+  </div>
+</div>
+
+<div class="chart-box" style="margin-bottom: 1.5rem;">
+  <div class="chart-title">Top revenue apps</div>
+  <table class="app-table">
+    <thead>
+      <tr>
+        <th>App</th>
+        <th>Niche</th>
+        <th>Price</th>
+        <th>Units</th>
+        <th>Revenue</th>
+        <th>Earnings</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Kids Piano Learning Music</td><td><span class="badge badge-blue">Kids</span></td><td>$4.99</td><td>3</td><td>$14.97</td><td>$11.97</td></tr>
+      <tr><td>Football Games Soccer</td><td><span class="badge badge-green">Sports</span></td><td>$9.99</td><td>1</td><td>$9.99</td><td>$7.99</td></tr>
+      <tr><td>Farm Tractor Rescue Mission</td><td><span class="badge badge-amber">Vehicles</span></td><td>$9.99</td><td>1</td><td>$9.99</td><td>$7.99</td></tr>
+      <tr><td>Real Tractor Farming Game 3D</td><td><span class="badge badge-amber">Vehicles</span></td><td>$9.99</td><td>1</td><td>$9.99</td><td>$7.99</td></tr>
+      <tr><td>Miami City Car Driving Sim</td><td><span class="badge badge-amber">Vehicles</span></td><td>$9.99</td><td>1</td><td>$9.99</td><td>$7.99</td></tr>
+      <tr><td>City Bus Driving Simulator</td><td><span class="badge badge-amber">Vehicles</span></td><td>$1.99</td><td>5</td><td>$9.95</td><td>$7.95</td></tr>
+      <tr><td>Bowling Strike Master 3D</td><td><span class="badge badge-green">Sports</span></td><td>$1.99</td><td>5</td><td>$9.95</td><td>$7.95</td></tr>
+      <tr><td>Car Parking Master 3D</td><td><span class="badge badge-amber">Vehicles</span></td><td>$1.99</td><td>4</td><td>$7.96</td><td>$6.36</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Free apps with high downloads (revenue opportunity)</div>
+  <div style="background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px;">
+    <div class="bar-row"><div class="bar-label">Soccer Star World Cup</div><div class="bar-track"><div class="bar-fill" style="width:100%; background:#E24B4A;"></div></div><div class="bar-val">21 free</div></div>
+    <div class="bar-row"><div class="bar-label">Jurassic Zoo Transport</div><div class="bar-track"><div class="bar-fill" style="width:86%; background:#EF9F27;"></div></div><div class="bar-val">18 free</div></div>
+    <div class="bar-row"><div class="bar-label">Drawing & Coloring</div><div class="bar-track"><div class="bar-fill" style="width:29%; background:#EF9F27;"></div></div><div class="bar-val">6 free</div></div>
+    <div class="bar-row"><div class="bar-label">Princess Queen HO</div><div class="bar-track"><div class="bar-fill" style="width:29%; background:#EF9F27;"></div></div><div class="bar-val">6 free</div></div>
+    <div class="bar-row"><div class="bar-label">Dream Garden Farm</div><div class="bar-track"><div class="bar-fill" style="width:29%; background:#EF9F27;"></div></div><div class="bar-val">6 free</div></div>
+    <div class="bar-row" style="margin-bottom:0;"><div class="bar-label">Ultimate Soccer League</div><div class="bar-track"><div class="bar-fill" style="width:24%; background:#888780;"></div></div><div class="bar-val">5 free</div></div>
+  </div>
+</div>
+
+<div class="insight-grid">
+  <div class="insight-card">
+    <div class="insight-title">Best niche: Vehicles/Racing</div>
+    <div class="insight-body">Dominates with $97.79 revenue from 39 paid downloads. Strong demand at both $1.99 (repeat buyers like City Bus) and $9.99 (premium). Keep investing here.</div>
+  </div>
+  <div class="insight-card">
+    <div class="insight-title">Sweet spot price: $9.99</div>
+    <div class="insight-body">Generates the most total revenue ($69.93) with only 7 transactions — best $/unit. Consider moving more apps to $9.99 where the niche supports it (sports, vehicles, premium sim).</div>
+  </div>
+  <div class="insight-card">
+    <div class="insight-title">Soccer Star: biggest leak</div>
+    <div class="insight-body">21 free downloads, $0 earned. This is your highest-volume free app. Even at $0.99 that's ~$21 missed. Test a small price on it or add in-app purchase.</div>
+  </div>
+  <div class="insight-card">
+    <div class="insight-title">US market = 87% of revenue</div>
+    <div class="insight-body">$198 of $228 came from the US. UK (GBP) contributes $28. Consider localizing top apps more aggressively for UK/CA markets to grow these.</div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+const textColor = isDark ? '#B4B2A9' : '#888780';
+
+new Chart(document.getElementById('nicheChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Vehicles', 'Sports', 'Other', 'Action', 'Kids', 'Productivity', 'Simulation', 'Casual'],
+    datasets: [{
+      data: [97.79, 41.35, 40.70, 17.93, 11.97, 7.92, 5.97, 4.59],
+      backgroundColor: ['#378ADD','#1D9E75','#888780','#D85A30','#534AB7','#0F6E56','#BA7517','#73726c'],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '$' + c.raw.toFixed(2) } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11 } } },
+      y: { grid: { color: gridColor }, ticks: { color: textColor, callback: v => '$' + v, font: { size: 11 } } }
+    }
+  }
+});
+
+new Chart(document.getElementById('priceChart'), {
+  type: 'bar',
+  data: {
+    labels: ['$0.99', '$1.49', '$1.99', '$4.99', '$6.99', '$9.99'],
+    datasets: [
+      { label: 'Units sold', data: [35, 4, 27, 4, 2, 7], backgroundColor: '#185FA5', borderRadius: 4 },
+      { label: 'Revenue ($)', data: [34.65, 5.96, 53.73, 19.96, 13.98, 69.93], backgroundColor: '#0F6E56', borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11 } } },
+      y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } }
+    }
+  }
+});
+
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: ['Apr 2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24','25'],
+    datasets: [{
+      data: [7.39,11.97,10.95,1.98,24.96,6.60,1.60,2.60,2.59,11.97,3.59,2.48,8.95,14.17,5.59,0.99,9.69,22.18,5.96,21.92,19.98,3.98,10.60,15.53],
+      borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.1)', fill: true,
+      tension: 0.3, pointRadius: 3, pointBackgroundColor: '#378ADD', borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '$' + c.raw.toFixed(2) } } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 }, autoSkip: true, maxRotation: 0 } },
+      y: { grid: { color: gridColor }, ticks: { color: textColor, callback: v => '$' + v, font: { size: 11 } } }
+    }
+  }
+});
+</script>

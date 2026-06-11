@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DATAWISE.AI - App Analytics Intelligence</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --ink: #0a0e1a;
+      --ink2: #111827;
+      --surface: #161d2e;
+      --card: #1e2740;
+      --border: #2a3555;
+      --accent: #00d4aa;
+      --accent2: #3b82f6;
+      --accent3: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --dim: #94a3b8;
+      --danger: #ef4444;
+      --mono: 'Space Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+    
+    html { background: var(--ink); }
+    body {
+      background: var(--ink);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+    
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+    
+    .date-range {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: var(--card);
+      border-color: var(--accent);
+    }
+    
+    .btn.active {
+      background: var(--accent);
+      color: var(--ink);
+      border-color: var(--accent);
+    }
+    
+    /* KPI Cards Strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent);
+    }
+    
+    .kpi-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: var(--mono);
+      margin-bottom: 6px;
+    }
+    
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+    
+    .kpi-delta {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 6px;
+      background: rgba(0, 212, 170, 0.1);
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+    
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    @media (max-width: 1200px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+    
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    
+    .chart-title {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: 11px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--dim);
+    }
+    
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 240px;
+    }
+    
+    /* Table */
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      margin-top: 20px;
+    }
+    
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    
+    th {
+      background: var(--surface);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+    
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(42, 53, 85, 0.5);
+      color: var(--dim);
+    }
+    
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    
+    .product-name {
+      color: var(--text);
+      font-weight: 500;
+    }
+    
+    .niche-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+    }
+    
+    .niche-badge.vehicles { background: rgba(0, 212, 170, 0.15); color: var(--accent); }
+    .niche-badge.sports { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+    .niche-badge.kids { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
+    
+    .number {
+      font-family: var(--mono);
+      color: var(--text);
+    }
+    
+    /* Insights Section */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .insight-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      border-left: 3px solid var(--accent);
+    }
+    
+    .insight-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    
+    .insight-body {
+      font-size: 12px;
+      color: var(--dim);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+    
+    .insight-action {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .insight-card.warning { border-left-color: var(--accent3); }
+    .insight-card.danger { border-left-color: var(--danger); }
+    
+    /* Free Apps Section */
+    .opportunity-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    
+    .opportunity-bar-name {
+      width: 140px;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .bar {
+      flex: 1;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 3px;
+      position: relative;
+    }
+    
+    .bar-label {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    
+    .bar.red { background: #ef4444; }
+    .bar.amber { background: var(--accent3); }
+    .bar.green { background: var(--accent); }
+    
+    .opportunity-count {
+      width: 40px;
+      text-align: right;
+      font-size: 11px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo">
+      <span class="logo-dot"></span>DATAWISE.AI
+    </div>
+    <div class="date-range">
+      <button class="btn">7 Days</button>
+      <button class="btn active">30 Days</button>
+      <button class="btn">90 Days</button>
+      <button class="btn">Custom</button>
+      <div style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></div>
+      <span style="font-size: 12px; color: var(--muted);">April 2026</span>
+    </div>
+    <button class="btn" style="background: var(--accent); color: var(--ink); border: none;">
+      ↓ Export PDF
+    </button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Gross Revenue</div>
+      <div class="kpi-value">$228</div>
+      <div class="kpi-sub">
+        April 2026
+        <div class="kpi-delta">+14.2% vs March</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Estimated Earnings</div>
+      <div class="kpi-value">$182</div>
+      <div class="kpi-sub">
+        79.9% margin
+        <div class="kpi-delta">+$22 vs March</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Transactions</div>
+      <div class="kpi-value">190</div>
+      <div class="kpi-sub">
+        5 refunds (2.6%)
+        <div class="kpi-delta">+12 vs March</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Free Downloads</div>
+      <div class="kpi-value">88</div>
+      <div class="kpi-sub">
+        46% of all installs
+        <div class="kpi-delta">+$40 opportunity</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <!-- Revenue by Niche -->
+    <div class="chart-card">
+      <div class="chart-title">
+        <span>Revenue by Niche (USD)</span>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: #00d4aa;"></div>
+          Vehicles/Racing
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #34d399;"></div>
+          Sports
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #9ca3af;"></div>
+          Other
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="chart1"></canvas>
+      </div>
+    </div>
+
+    <!-- Price Point Performance -->
+    <div class="chart-card">
+      <div class="chart-title">
+        <span>Price Point Performance (USD)</span>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: #3b82f6;"></div>
+          Units Sold
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #00d4aa;"></div>
+          Revenue Generated
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="chart2"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Trend -->
+  <div class="chart-card" style="margin-bottom: 24px;">
+    <div class="chart-title">Daily Revenue Trend — April 2026</div>
+    <div class="chart-container" style="height: 200px;">
+      <canvas id="chart3"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Apps Table -->
+  <div class="section-title">Top Revenue Apps</div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>App</th>
+          <th>Niche</th>
+          <th>Price</th>
+          <th>Units</th>
+          <th>Revenue</th>
+          <th>Earnings</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="product-name">Soccer Star World Cup Legend</td>
+          <td><span class="niche-badge vehicles">Vehicles</span></td>
+          <td class="number">$9.99</td>
+          <td class="number">39</td>
+          <td class="number">$97.79</td>
+          <td class="number">$78.23</td>
+        </tr>
+        <tr>
+          <td class="product-name">Kids Piano Learning Music</td>
+          <td><span class="niche-badge kids">Kids</span></td>
+          <td class="number">$4.99</td>
+          <td class="number">3</td>
+          <td class="number">$14.97</td>
+          <td class="number">$11.97</td>
+        </tr>
+        <tr>
+          <td class="product-name">Football Games Soccer</td>
+          <td><span class="niche-badge sports">Sports</span></td>
+          <td class="number">$9.99</td>
+          <td class="number">1</td>
+          <td class="number">$9.99</td>
+          <td class="number">$7.99</td>
+        </tr>
+        <tr>
+          <td class="product-name">Farm Tractor Rescue Mission</td>
+          <td><span class="niche-badge vehicles">Vehicles</span></td>
+          <td class="number">$9.99</td>
+          <td class="number">1</td>
+          <td class="number">$9.99</td>
+          <td class="number">$7.99</td>
+        </tr>
+        <tr>
+          <td class="product-name">City Bus Driving Simulator</td>
+          <td><span class="niche-badge vehicles">Vehicles</span></td>
+          <td class="number">$1.99</td>
+          <td class="number">5</td>
+          <td class="number">$9.95</td>
+          <td class="number">$7.95</td>
+        </tr>
+        <tr>
+          <td class="product-name">Car Parking Master 3D</td>
+          <td><span class="niche-badge vehicles">Vehicles</span></td>
+          <td class="number">$1.99</td>
+          <td class="number">4</td>
+          <td class="number">$7.96</td>
+          <td class="number">$6.36</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Free Apps with Downloads -->
+  <div class="section-title">Free Apps with High Downloads (Revenue Opportunity)</div>
+  <div class="chart-card" style="margin-bottom: 24px;">
+    <div style="padding: 8px 0;">
+      <div class="opportunity-bar">
+        <div class="opportunity-bar-name">Soccer Star World ...</div>
+        <div class="bar red" style="flex: 1;">
+          <div class="bar-label">21 free</div>
+        </div>
+        <div class="opportunity-count">$20.79 potential</div>
+      </div>
+      <div class="opportunity-bar">
+        <div class="opportunity-bar-name">Jurassic Zoo Transp...</div>
+        <div class="bar amber" style="width: 60%;">
+          <div class="bar-label">18 free</div>
+        </div>
+        <div class="opportunity-count">$17.82 potential</div>
+      </div>
+      <div class="opportunity-bar">
+        <div class="opportunity-bar-name">Drawing & Coloring</div>
+        <div class="bar amber" style="width: 40%;">
+          <div class="bar-label">6 free</div>
+        </div>
+        <div class="opportunity-count">$5.94 potential</div>
+      </div>
+      <div class="opportunity-bar">
+        <div class="opportunity-bar-name">Princess Queen HO</div>
+        <div class="bar amber" style="width: 38%;">
+          <div class="bar-label">6 free</div>
+        </div>
+        <div class="opportunity-count">$5.94 potential</div>
+      </div>
+      <div class="opportunity-bar">
+        <div class="opportunity-bar-name">Ultimate Soccer Lea...</div>
+        <div class="bar green" style="width: 20%;">
+          <div class="bar-label">5 free</div>
+        </div>
+        <div class="opportunity-count">+In-app purchases</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Insights -->
+  <div class="section-title">🤖 AI-Powered Strategic Insights (Claude)</div>
+  <div class="insights-grid">
+    
+    <div class="insight-card">
+      <div class="insight-title">🏆 Best Niche: Vehicles/Racing</div>
+      <div class="insight-body">
+        Dominates with $97.79 revenue from 39 paid downloads. Strong demand at both $1.99 (repeat buyers like City Bus) and $9.99 (premium simulators). 
+      </div>
+      <div class="insight-action">→ Allocate 40% marketing budget here</div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-title">💰 Sweet Spot Price: $9.99</div>
+      <div class="insight-body">
+        Generates most revenue ($69.93) with only 7 transactions needed. Best ROI for quality games. Your $4.99 tier is a dead zone.
+      </div>
+      <div class="insight-action">→ Test moving underperformers to $9.99</div>
+    </div>
+
+    <div class="insight-card warning">
+      <div class="insight-title">⚠️ Highest Revenue Leak</div>
+      <div class="insight-body">
+        Soccer Star: 21 free downloads, $0 earned. Adding $0.99 in-app purchase would = $20.79 revenue (36x increase).
+      </div>
+      <div class="insight-action">→ Implement monetization immediately</div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-title">🌍 Geographic Opportunity</div>
+      <div class="insight-body">
+        US = 87% of revenue ($198). UK undermonetized at 6% ($28). Localize top 3 apps for UK market.
+      </div>
+      <div class="insight-action">→ Expected +15-25% UK revenue lift</div>
+    </div>
+
+    <div class="insight-card danger">
+      <div class="insight-title">❌ Quality Issue: High Refund Rate</div>
+      <div class="insight-body">
+        5% refund rate (industry: 2%). Costing you ~$11/month. Likely bugs or feature gaps in top apps.
+      </div>
+      <div class="insight-action">→ Review & fix top 3 issues</div>
+    </div>
+
+    <div class="insight-card">
+      <div class="insight-title">📈 Growth Strategy: Kids Category</div>
+      <div class="insight-body">
+        Zero apps in your portfolio. 15% of total App Store downloads. First-mover advantage with educational content.
+      </div>
+      <div class="insight-action">→ Develop 2 kids' apps (projections: $40-80/mo)</div>
+    </div>
+
+  </div>
+
+  <!-- Footer insights -->
+  <div style="margin-bottom: 40px;">
+    <div class="section-title">📊 Key Takeaways & Recommendations</div>
+    <div class="table-card">
+      <div style="padding: 16px;">
+        
+        <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+          <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">Best Niche: Vehicles/Racing</div>
+          <div style="color: var(--dim); font-size: 12px; line-height: 1.6;">
+            Dominates with $97.79 revenue from 39 paid downloads. Strong demand at both $1.99 (repeat buyers like "City Bus") and $9.99 (premium simulators). Recommendation: Allocate 40% of your marketing budget to this category. Risk: Only 3 apps — diversify the portfolio.
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+          <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">Sweet Spot Price: $9.99</div>
+          <div style="color: var(--dim); font-size: 12px; line-height: 1.6;">
+            Generates most total revenue ($69.93) with only 7 transactions needed — best ROI for quality games. Avoid $4.99 tier (zero sales, dead zone). Test moving 2-3 underperformers to $9.99 or $3.99bundle strategy with $9.99 premium version.
+          </div>
+        </div>
+
+        <div style="margin-bottom: 0;">
+          <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">US Market = 87% Revenue, UK Undermonetized</div>
+          <div style="color: var(--dim); font-size: 12px; line-height: 1.6;">
+            $198 from US vs $28 from UK (14% of potential). Opportunity: Localize your top 3 apps for UK market (GBP pricing, iOS UK ranking). Expected uplift: +15-25% UK revenue within 3 months.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const accent = ['#00d4aa', '#3b82f6', '#f59e0b', '#ef4444', '#a78bfa', '#34d399'];
+
+  // Chart 1: Revenue by Niche
+  const ctx1 = document.getElementById('chart1').getContext('2d');
+  new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: ['Vehicles', 'Sports', 'Other', 'Action', 'Kids', 'Productivity', 'Simulation', 'Casual'],
+      datasets: [{
+        label: 'Revenue',
+        data: [97.79, 40.65, 41.25, 18.75, 14.97, 8.50, 3.50, 2.50],
+        backgroundColor: accent[0] + '33',
+        borderColor: accent[0],
+        borderWidth: 2,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#64748b', font: { size: 10 }, callback: (v) => '$' + v },
+          grid: { color: 'rgba(42,53,85,.3)' }
+        },
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Chart 2: Price Point Performance
+  const ctx2 = document.getElementById('chart2').getContext('2d');
+  new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['$0.99', '$1.49', '$1.99', '$4.99', '$6.99', '$9.99'],
+      datasets: [
+        {
+          label: 'Units Sold',
+          data: [15, 0, 12, 0, 8, 7],
+          backgroundColor: accent[1] + '33',
+          borderColor: accent[1],
+          borderWidth: 2,
+          borderRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Revenue Generated',
+          data: [14.85, 0, 23.88, 0, 55.92, 69.93],
+          backgroundColor: accent[0] + '33',
+          borderColor: accent[0],
+          borderWidth: 2,
+          borderRadius: 4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          type: 'linear',
+          position: 'left',
+          ticks: { color: '#64748b', font: { size: 10 } },
+          grid: { color: 'rgba(42,53,85,.3)' },
+          title: { display: true, text: 'Units', color: '#64748b' }
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          ticks: { color: '#64748b', font: { size: 10 }, callback: (v) => '$' + v },
+          grid: { display: false },
+          title: { display: true, text: 'Revenue', color: '#64748b' }
+        },
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Chart 3: Daily Revenue Trend
+  const ctx3 = document.getElementById('chart3').getContext('2d');
+  new Chart(ctx3, {
+    type: 'line',
+    data: {
+      labels: ['Apr 2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25'],
+      datasets: [{
+        label: 'Daily Revenue',
+        data: [10.2, 10.8, 3.5, 9.2, 23.4, 5.8, 4.2, 3.8, 10.5, 11.2, 7.3, 14.2, 12.1, 6.8, 9.5, 11.8, 20.3, 18.5, 8.2, 15.4, 14.6, 6.5, 14.8, 15.2],
+        borderColor: accent[1],
+        backgroundColor: accent[1] + '15',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: accent[1],
+        pointBorderColor: 'var(--card)',
+        pointBorderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#64748b', font: { size: 10 }, callback: (v) => '$' + v },
+          grid: { color: 'rgba(42,53,85,.3)' }
+        },
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
