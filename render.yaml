@@ -3,7 +3,7 @@ services:
     name: predictiq-api
     runtime: python
     repo: https://github.com/mustapha04/DataBai-opencode
-    buildCommand: pip install -r PredictIQ/backend/requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r PredictIQ/backend/requirements.txt
     startCommand: cd PredictIQ/backend && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: SUPABASE_URL
