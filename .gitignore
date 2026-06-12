@@ -12,9 +12,15 @@ node_modules/
 
 *.log
 *.rar
-backend_log*.txt
-be_log*.txt
-gh_auth*.txt
+*.txt
 
 .DS_Store
 Thumbs.db
+
+# opencode config (not part of PredictIQ app)
+.opencode/
+.agents/
+skills-lock.json
+
+# local backend files
+.PredictIQ/
